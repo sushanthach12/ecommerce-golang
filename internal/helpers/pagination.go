@@ -28,3 +28,7 @@ func ParsePaginationParams(r *http.Request) paginationParams {
 		Limit: limit,
 	}
 }
+
+func GetPathValue(r *http.Request, key string) string {
+	return r.PathValue(key)
+}

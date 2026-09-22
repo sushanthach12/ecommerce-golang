@@ -13,5 +13,11 @@ func newAdapter(svc Service) Adapter {
 }
 
 func (a *adapter) GetByID(ctx context.Context, id string) (Product, error) {
-	return a.svc.GetById(ctx, id)
+	response, err := a.svc.GetById(ctx, id)
+
+	if err != nil {
+		return Product{}, err
+	}
+
+	return response.Data, nil
 }

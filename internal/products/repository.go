@@ -56,15 +56,14 @@ func (r *repository) List(ctx context.Context, limit, skip int) ([]productEntity
 }
 
 func (r *repository) GetById(ctx context.Context, id string) (productEntity, error) {
-	row, err := r.db.QueryContext(ctx, `
+	row := r.db.QueryRowContext(ctx, `
 		SELECT id, name, price, quantity, created_at, updated_at
 		FROM products
 		WHERE id = $1
 	`, id)
-	if err != nil {
-		return productEntity{}, fmt.Errorf("query products: %w", err)
+	if row.Err() != nil {
+		return productEntity{}, fmt.Errorf("query products: %w", row.Err())
 	}
-	defer row.Close()
 
 	var product productEntity
 	if err := row.Scan(&product.ID, &product.Name, &product.Price, &product.Quantity, &product.CreatedAt, &product.UpdatedAt); err != nil {

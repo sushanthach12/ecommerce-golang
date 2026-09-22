@@ -19,7 +19,7 @@ type Product struct {
 
 type Service interface {
 	List(ctx context.Context, params listProductPayload) (constants.Response[listProductsResponseDto], error)
-	GetById(ctx context.Context, id string) (Product, error)
+	GetById(ctx context.Context, id string) (constants.SimpleResponse[Product], error)
 }
 
 type productRepository interface {

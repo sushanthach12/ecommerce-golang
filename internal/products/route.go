@@ -19,6 +19,7 @@ func Register(router *chi.Mux, db *sql.DB, logger *slog.Logger) *returnValue {
 	adapter := newAdapter(service)
 
 	router.Get("/products", handler.List)
+	router.Get("/products/{product_id}", handler.GetById)
 
 	return &returnValue{
 		Adapter: adapter,

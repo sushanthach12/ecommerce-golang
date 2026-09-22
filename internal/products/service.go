@@ -54,18 +54,18 @@ func (s *service) List(ctx context.Context, params listProductPayload) (constant
 	}), nil
 }
 
-func (s *service) GetById(ctx context.Context, id string) (Product, error) {
+func (s *service) GetById(ctx context.Context, id string) (constants.SimpleResponse[Product], error) {
 	product, err := s.repo.GetById(ctx, id)
 	if err != nil {
-		return Product{}, fmt.Errorf("service: list products: %w", err)
+		return constants.NewResponse(Product{}, nil), fmt.Errorf("service: list products: %w", err)
 	}
 
-	return Product{
+	return constants.NewResponse(Product{
 		ID:        product.ID,
 		Name:      product.Name,
 		Price:     product.Price,
 		Quantity:  product.Quantity,
 		CreatedAt: product.CreatedAt,
 		UpdatedAt: product.UpdatedAt,
-	}, nil
+	}, nil), nil
 }

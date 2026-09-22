@@ -31,7 +31,28 @@ func (h *handler) List(w http.ResponseWriter, r *http.Request) {
 		Limit: params.Limit,
 	})
 	if err != nil {
-		h.logger.Error("list listings failed", "error", err)
+		h.logger.Error("list products failed", "error", err)
+		httpx.Error(w, http.StatusInternalServerError, "Something went wrong!", httpx.CodeInternalError)
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, response)
+}
+
+func (h *handler) GetById(w http.ResponseWriter, r *http.Request) {
+	productId := helpers.GetPathValue(r, "product_id")
+
+	h.logger.Info("Received request for product details")
+
+	if productId == "" {
+		h.logger.Error("Invalid product id")
+		httpx.Error(w, http.StatusBadGateway, "Invalid Product Id", httpx.CodeInvalidId)
+		return
+	}
+
+	response, err := h.service.GetById(r.Context(), productId)
+	if err != nil {
+		h.logger.Error("product details failed", "error", err)
 		httpx.Error(w, http.StatusInternalServerError, "Something went wrong!", httpx.CodeInternalError)
 		return
 	}
