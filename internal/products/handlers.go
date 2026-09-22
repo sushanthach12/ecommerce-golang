@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/sushanthach12/ecom-go/internal/helpers"
 	"github.com/sushanthach12/ecom-go/internal/httpx"
 )
 
@@ -21,10 +22,14 @@ func newHandler(svc Service, logger *slog.Logger) *handler {
 }
 
 func (h *handler) List(w http.ResponseWriter, r *http.Request) {
+	params := helpers.ParsePaginationParams(r)
 
 	h.logger.Info("Received request for product listing")
 
-	response, err := h.service.List(r.Context())
+	response, err := h.service.List(r.Context(), listProductPayload{
+		Page:  params.Page,
+		Limit: params.Limit,
+	})
 	if err != nil {
 		h.logger.Error("list listings failed", "error", err)
 		httpx.Error(w, http.StatusInternalServerError, "Something went wrong!", httpx.CodeInternalError)

@@ -8,7 +8,7 @@
 .PHONY: build run migrate-up migrate-down
 
 build:
-	@go build -o bin/api ./cmd
+	@go build -o bin/api ./cmd/api
 
 run: build
 	@./bin/api

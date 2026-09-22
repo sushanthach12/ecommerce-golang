@@ -2,30 +2,54 @@ package products
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sushanthach12/ecom-go/internal/constants"
 )
 
 type service struct {
+	repo ProductRepository
 }
 
-func NewService() Service {
-	return &service{}
+func NewService(repo ProductRepository) Service {
+	return &service{
+		repo: repo,
+	}
 }
 
-func (s *service) List(ctx context.Context) (constants.Response[getProductsResponseDto], error) {
+func (s *service) List(ctx context.Context, params listProductPayload) (constants.Response[listProductsResponseDto], error) {
+	page := params.Page
+	limit := params.Limit
 
-	products := make([]getProductsResponseDto, 0)
+	skip := (page - 1) * limit
 
-	products = append(products, getProductsResponseDto{
-		ID:   "product-1",
-		Name: "product",
-	})
+	totalItems, err := s.repo.Count(ctx)
+	if err != nil {
+		return constants.Response[listProductsResponseDto]{}, fmt.Errorf("service: get product count: %w", err)
+	}
 
-	return constants.NewPaginatedResponse(products, constants.Pagination{
-		Page:       1,
-		PageSize:   10,
-		TotalItems: 10,
-		TotalPages: 1,
+	products, err := s.repo.List(ctx, limit, skip)
+	if err != nil {
+		return constants.Response[listProductsResponseDto]{}, fmt.Errorf("service: list products: %w", err)
+	}
+
+	items := make([]listProductsResponseDto, 0, len(products))
+	for _, p := range products {
+		items = append(items, listProductsResponseDto{
+			ID:        p.ID,
+			Name:      p.Name,
+			Price:     p.Price,
+			Quantity:  p.Quantity,
+			CreatedAt: p.CreatedAt,
+		})
+	}
+
+	totalPages := (totalItems + limit - 1) / limit
+
+	return constants.NewPaginatedResponse(items, constants.Pagination{
+		Page:       page,
+		PageSize:   limit,
+		TotalItems: totalItems,
+		TotalPages: totalPages,
 	}), nil
 }

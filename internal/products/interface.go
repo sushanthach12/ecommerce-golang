@@ -7,5 +7,10 @@ import (
 )
 
 type Service interface {
-	List(ctx context.Context) (constants.Response[getProductsResponseDto], error)
+	List(ctx context.Context, params listProductPayload) (constants.Response[listProductsResponseDto], error)
+}
+
+type ProductRepository interface {
+	Count(ctx context.Context) (int, error)
+	List(ctx context.Context, limit, skip int) ([]productEntity, error)
 }
