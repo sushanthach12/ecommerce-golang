@@ -8,10 +8,10 @@ import (
 )
 
 type service struct {
-	repo ProductRepository
+	repo productRepository
 }
 
-func NewService(repo ProductRepository) Service {
+func NewService(repo productRepository) Service {
 	return &service{
 		repo: repo,
 	}
@@ -52,4 +52,20 @@ func (s *service) List(ctx context.Context, params listProductPayload) (constant
 		TotalItems: totalItems,
 		TotalPages: totalPages,
 	}), nil
+}
+
+func (s *service) GetById(ctx context.Context, id string) (Product, error) {
+	product, err := s.repo.GetById(ctx, id)
+	if err != nil {
+		return Product{}, fmt.Errorf("service: list products: %w", err)
+	}
+
+	return Product{
+		ID:        product.ID,
+		Name:      product.Name,
+		Price:     product.Price,
+		Quantity:  product.Quantity,
+		CreatedAt: product.CreatedAt,
+		UpdatedAt: product.UpdatedAt,
+	}, nil
 }

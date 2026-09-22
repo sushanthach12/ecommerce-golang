@@ -10,7 +10,7 @@ type repository struct {
 	db *sql.DB
 }
 
-func newRepository(db *sql.DB) ProductRepository {
+func newRepository(db *sql.DB) productRepository {
 	return &repository{
 		db: db,
 	}
@@ -53,4 +53,23 @@ func (r *repository) List(ctx context.Context, limit, skip int) ([]productEntity
 	}
 
 	return products, nil
+}
+
+func (r *repository) GetById(ctx context.Context, id string) (productEntity, error) {
+	row, err := r.db.QueryContext(ctx, `
+		SELECT id, name, price, quantity, created_at, updated_at
+		FROM products
+		WHERE id = $1
+	`, id)
+	if err != nil {
+		return productEntity{}, fmt.Errorf("query products: %w", err)
+	}
+	defer row.Close()
+
+	var product productEntity
+	if err := row.Scan(&product.ID, &product.Name, &product.Price, &product.Quantity, &product.CreatedAt, &product.UpdatedAt); err != nil {
+		return productEntity{}, fmt.Errorf("scan product row: %w", err)
+	}
+
+	return product, nil
 }

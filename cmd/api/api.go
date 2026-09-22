@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -43,7 +46,7 @@ func (app *application) mount() http.Handler {
 	return router
 }
 
-func (app *application) run(handler http.Handler) error {
+func (app *application) run(ctx context.Context, handler http.Handler) error {
 
 	srv := &http.Server{
 		Addr:         app.config.Port,
@@ -55,5 +58,32 @@ func (app *application) run(handler http.Handler) error {
 
 	log.Printf("Server listening at port %s", app.config.Port)
 
-	return srv.ListenAndServe()
+	// Channel to catch errors from ListenAndServe
+	serverErr := make(chan error, 1)
+
+	go func() {
+		app.logger.Info("Server started", "addr", app.config.Port)
+		serverErr <- srv.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serverErr:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("server error: %w", err)
+		}
+	case <-ctx.Done():
+		app.logger.Info("Shutdown signal received, shutting down server...")
+
+		// Give in-flight requests time to finish
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("graceful shutdown failed: %w", err)
+		}
+
+		app.logger.Info("Server stopped")
+	}
+
+	return nil
 }

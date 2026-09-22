@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/sushanthach12/ecom-go/internal/config"
 	"github.com/sushanthach12/ecom-go/internal/database"
@@ -30,7 +33,11 @@ func main() {
 		db:     db,
 	}
 
-	if err := api.run(api.mount()); err != nil {
+	// Listen for interrupt (Ctrl+C) and termination signals
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	if err := api.run(ctx, api.mount()); err != nil {
 		logger.Error("Server failed to start", "error", err)
 		os.Exit(1)
 	}
