@@ -2,7 +2,10 @@ package httpx
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+
+	"github.com/sushanthach12/ecom-go/internal/constants"
 )
 
 /*
@@ -81,4 +84,41 @@ func ValidationError(w http.ResponseWriter, status_code int, message string, cod
 			Field:   field,
 		},
 	})
+}
+
+type NotFoundError struct {
+	Message string
+}
+
+func (e *NotFoundError) Error() string {
+	return e.Message
+}
+
+type ConflictError struct {
+	Field   string
+	Message string
+}
+
+func (e *ConflictError) Error() string {
+	return e.Message
+}
+
+// HandleError inspects err's concrete type and writes the appropriate HTTP
+// response. Falls back to a generic 500 if the error doesn't match any
+// known type.
+func HandleError(w http.ResponseWriter, err error) {
+	var notFoundErr *NotFoundError
+	var conflictErr *ConflictError
+	var validationErr *constants.ValidationError
+
+	switch {
+	case errors.As(err, &notFoundErr):
+		Error(w, http.StatusNotFound, notFoundErr.Message, CodeNotFound)
+	case errors.As(err, &conflictErr):
+		ValidationError(w, http.StatusConflict, conflictErr.Message, CodeConflict, conflictErr.Field)
+	case errors.As(err, &validationErr):
+		ValidationError(w, http.StatusUnprocessableEntity, validationErr.Message, CodeValidationFailed, validationErr.Field)
+	default:
+		Error(w, http.StatusInternalServerError, "Something went wrong!", CodeInternalError)
+	}
 }

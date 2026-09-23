@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sushanthach12/ecom-go/internal/constants"
+	"github.com/sushanthach12/ecom-go/internal/httpx"
 	"github.com/sushanthach12/ecom-go/internal/products"
 )
 
@@ -46,14 +47,13 @@ func (s *service) PlaceOrder(ctx context.Context, payload placeOrderParams) (con
 	for _, item := range payload.Items {
 		product, ok := productById[item.ProductId]
 		if !ok {
-			return defaultResponse, &constants.ValidationError{
-				Field:   "items.productId",
+			return defaultResponse, &httpx.NotFoundError{
 				Message: fmt.Sprintf("product %s not found", item.ProductId),
 			}
 		}
 
 		if product.Quantity < item.Quantity {
-			return defaultResponse, &constants.ValidationError{
+			return defaultResponse, &httpx.ConflictError{
 				Field:   "items.quantity",
 				Message: fmt.Sprintf("insufficient stock for product %s", item.ProductId),
 			}

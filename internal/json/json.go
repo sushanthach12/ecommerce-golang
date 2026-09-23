@@ -38,7 +38,7 @@ func DecodeAndValidate[T any, PT interface {
 
 	if validationErr := PT(&payload).Validate(); validationErr != nil {
 		vErr, ok := errors.AsType[*constants.ValidationError](validationErr)
-		if !ok {
+		if ok {
 			logger.Error("Validation failed:", "error", validationErr.Error())
 			httpx.Error(w, http.StatusBadRequest, "Invalid Payload", httpx.CodeValidationFailed)
 			return payload, false

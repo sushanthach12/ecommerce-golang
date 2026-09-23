@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/sushanthach12/ecom-go/internal/constants"
+	"github.com/sushanthach12/ecom-go/internal/httpx"
 )
 
 var (
@@ -68,7 +69,9 @@ func (s *service) GetById(ctx context.Context, id string) (constants.SimpleRespo
 	product, err := s.repo.GetById(ctx, id)
 	if err != nil {
 		s.logger.Error("service: product not found", "error", err)
-		return constants.NewResponse(Product{}, nil), ErrProductNotFound
+		return constants.NewResponse(Product{}, nil), &httpx.NotFoundError{
+			Message: fmt.Sprintf("product with id %s not found", id),
+		}
 	}
 
 	return constants.NewResponse(Product{

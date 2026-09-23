@@ -41,7 +41,7 @@ func (h *handler) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		h.logger.Error("Failed to place order:", "error", err)
-		httpx.Error(w, http.StatusInternalServerError, "Something went wrong!", httpx.CodeInternalError)
+		httpx.HandleError(w, err)
 		return
 	}
 
