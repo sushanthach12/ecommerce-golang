@@ -13,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sushanthach12/ecom-go/internal/config"
+	"github.com/sushanthach12/ecom-go/internal/health"
 	"github.com/sushanthach12/ecom-go/internal/products"
 )
 
@@ -36,9 +37,8 @@ func (app *application) mount() http.Handler {
 	// processing should be stopped.
 	router.Use(middleware.Timeout(60 * time.Second))
 
-	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("All good"))
-	})
+	// Health
+	health.Register(router)
 
 	// Routes
 	products.Register(router, app.db, app.logger)
