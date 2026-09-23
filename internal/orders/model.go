@@ -3,14 +3,12 @@ package orders
 import "time"
 
 type orderItems struct {
-	ID        string
-	OrderId   string
-	ProductId string
-
-	// product name
-
-	Quantity int32
-	Price    float32
+	ID          string
+	OrderId     string
+	ProductId   string
+	ProductName string
+	Quantity    int32
+	Price       float32
 }
 
 type order struct {

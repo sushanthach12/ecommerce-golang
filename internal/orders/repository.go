@@ -40,13 +40,13 @@ func (r *repository) Create(ctx context.Context, data placeOrderRepoParams) (ord
 	for _, item := range data.Items {
 		var oi orderItems
 		itemRow := exec.QueryRowContext(ctx,
-			`INSERT INTO order_items (order_id, product_id, price, quantity)
-			 VALUES ($1, $2, $3, $4)
-			 RETURNING id, order_id, product_id, price, quantity`,
-			o.ID, item.ProductId, item.Price, item.Quantity,
+			`INSERT INTO order_items (order_id, product_id, product_name, price, quantity)
+			 VALUES ($1, $2, $3, $4, $5)
+			 RETURNING id, order_id, product_id, product_name, price, quantity`,
+			o.ID, item.ProductId, item.ProductName, item.Price, item.Quantity,
 		)
 
-		if err := itemRow.Scan(&oi.ID, &oi.OrderId, &oi.ProductId, &oi.Price, &oi.Quantity); err != nil {
+		if err := itemRow.Scan(&oi.ID, &oi.OrderId, &oi.ProductId, &oi.ProductName, &oi.Price, &oi.Quantity); err != nil {
 			return order{}, err
 		}
 

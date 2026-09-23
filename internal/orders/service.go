@@ -60,9 +60,10 @@ func (s *service) PlaceOrder(ctx context.Context, payload placeOrderParams) (con
 		}
 
 		orderItems = append(orderItems, placeOrderItemRepoParam{
-			ProductId: item.ProductId,
-			Price:     product.Price,
-			Quantity:  item.Quantity,
+			ProductId:   item.ProductId,
+			ProductName: product.Name,
+			Price:       product.Price,
+			Quantity:    item.Quantity,
 		})
 
 		total += product.Price * float64(item.Quantity)

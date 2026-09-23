@@ -35,9 +35,10 @@ type Service interface {
 }
 
 type placeOrderItemRepoParam struct {
-	ProductId string
-	Price     float64
-	Quantity  int32
+	ProductId   string
+	ProductName string
+	Price       float64
+	Quantity    int32
 }
 
 type placeOrderRepoParams struct {
