@@ -21,7 +21,8 @@ func newAdapter(repo productRepository, logger *slog.Logger) Adapter {
 func (a *adapter) GetByID(ctx context.Context, id string) (Product, error) {
 	product, err := a.repo.GetById(ctx, id)
 	if err != nil {
-		return Product{}, fmt.Errorf("service: list products: %w", err)
+		a.logger.Error("adapter: GetByID", "error", err)
+		return Product{}, ErrProductNotFound
 	}
 
 	return Product{
@@ -37,8 +38,8 @@ func (a *adapter) GetByID(ctx context.Context, id string) (Product, error) {
 func (a *adapter) FindByIds(ctx context.Context, productIds []string) ([]Product, error) {
 	products, err := a.repo.FindByIds(ctx, productIds)
 	if err != nil {
-		a.logger.Error("service: list products", "error", err)
-		return nil, fmt.Errorf("service: list products: %w", err)
+		a.logger.Error("adapter: FindByIds", "error", err)
+		return nil, ErrProductsNotFound
 	}
 
 	result := make([]Product, len(products))

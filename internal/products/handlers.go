@@ -52,6 +52,11 @@ func (h *handler) GetById(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.service.GetById(r.Context(), productId)
 	if err != nil {
+		if err == ErrProductNotFound {
+			h.logger.Error("product not found", "error", err)
+			httpx.Error(w, http.StatusNotFound, "Product not found!", httpx.CodeNotFound)
+			return
+		}
 		h.logger.Error("product details failed", "error", err)
 		httpx.Error(w, http.StatusInternalServerError, "Something went wrong!", httpx.CodeInternalError)
 		return

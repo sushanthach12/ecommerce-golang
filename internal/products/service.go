@@ -2,10 +2,16 @@ package products
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/sushanthach12/ecom-go/internal/constants"
+)
+
+var (
+	ErrProductNotFound  = errors.New("product not found")
+	ErrProductsNotFound = errors.New("products not found")
 )
 
 type service struct {
@@ -61,7 +67,8 @@ func (s *service) List(ctx context.Context, params listProductPayload) (constant
 func (s *service) GetById(ctx context.Context, id string) (constants.SimpleResponse[Product], error) {
 	product, err := s.repo.GetById(ctx, id)
 	if err != nil {
-		return constants.NewResponse(Product{}, nil), fmt.Errorf("service: list products: %w", err)
+		s.logger.Error("service: product not found", "error", err)
+		return constants.NewResponse(Product{}, nil), ErrProductNotFound
 	}
 
 	return constants.NewResponse(Product{
@@ -77,8 +84,8 @@ func (s *service) GetById(ctx context.Context, id string) (constants.SimpleRespo
 func (s *service) FindByIds(ctx context.Context, productIds []string) ([]Product, error) {
 	products, err := s.repo.FindByIds(ctx, productIds)
 	if err != nil {
-		s.logger.Error("service: list products", "error", err)
-		return nil, fmt.Errorf("service: list products: %w", err)
+		s.logger.Error("service: products not found", "error", err)
+		return nil, ErrProductsNotFound
 	}
 
 	result := make([]Product, len(products))
