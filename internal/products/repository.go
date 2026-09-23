@@ -2,15 +2,17 @@ package products
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+
+	"github.com/lib/pq"
+	"github.com/sushanthach12/ecom-go/internal/database"
 )
 
 type repository struct {
-	db *sql.DB
+	db *database.DB
 }
 
-func newRepository(db *sql.DB) productRepository {
+func newRepository(db *database.DB) productRepository {
 	return &repository{
 		db: db,
 	}
@@ -71,4 +73,65 @@ func (r *repository) GetById(ctx context.Context, id string) (productEntity, err
 	}
 
 	return product, nil
+}
+
+func (r *repository) FindByIds(ctx context.Context, ids []string) ([]productEntity, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT id, name, price, quantity, created_at, updated_at
+		FROM products
+		WHERE id = ANY($1)
+	`, pq.Array(ids))
+	if err != nil {
+		return nil, fmt.Errorf("query products: %w", err)
+	}
+	defer rows.Close()
+
+	var result []productEntity
+
+	for rows.Next() {
+		var product productEntity
+		if err := rows.Scan(
+			&product.ID,
+			&product.Name,
+			&product.Price,
+			&product.Quantity,
+			&product.CreatedAt,
+			&product.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan product row: %w", err)
+		}
+		result = append(result, product)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate product rows: %w", err)
+	}
+
+	return result, nil
+}
+
+func (r *repository) DecrementStock(ctx context.Context, items []stockDecrementRepoParam) error {
+	exec := database.GetExecutor(ctx, r.db)
+
+	for _, item := range items {
+		result, err := exec.ExecContext(ctx, `
+			UPDATE products
+			SET quantity = quantity - $1, updated_at = NOW()
+			WHERE id = $2 AND quantity >= $1
+		`, item.Quantity, item.ProductId)
+		if err != nil {
+			return fmt.Errorf("decrement stock for product %s: %w", item.ProductId, err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("check rows affected for product %s: %w", item.ProductId, err)
+		}
+
+		if rowsAffected == 0 {
+			return fmt.Errorf("insufficient stock or product %s not found", item.ProductId)
+		}
+	}
+
+	return nil
 }

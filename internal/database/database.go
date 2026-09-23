@@ -10,7 +10,12 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func Connect(url string) (*sql.DB, error) {
+type DB struct {
+	*sql.DB
+	TxManager *TxManager
+}
+
+func Connect(url string) (*DB, error) {
 
 	db, err := sql.Open("pgx", url)
 	if err != nil {
@@ -33,5 +38,15 @@ func Connect(url string) (*sql.DB, error) {
 	}
 
 	log.Println("Successfully connected to the database")
-	return db, nil
+
+	return &DB{
+		DB:        db,
+		TxManager: NewTxManager(db),
+	}, nil
+}
+
+type dbExecutor interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }

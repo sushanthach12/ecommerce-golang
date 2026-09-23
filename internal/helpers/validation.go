@@ -1,6 +1,8 @@
 package helpers
 
-import "strings"
+import (
+	"strings"
+)
 
 func CheckIfStringEmpty(s string) bool {
 	if strings.TrimSpace(s) == "" {
@@ -20,4 +22,8 @@ func CheckIfValidNumber(num float32, required bool) bool {
 	}
 
 	return true
+}
+
+func CheckArrayEmpty[T any](value []T) bool {
+	return len(value) == 0
 }

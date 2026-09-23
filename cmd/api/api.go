@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -13,14 +12,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/sushanthach12/ecom-go/internal/config"
+	"github.com/sushanthach12/ecom-go/internal/database"
 	"github.com/sushanthach12/ecom-go/internal/health"
+	"github.com/sushanthach12/ecom-go/internal/orders"
 	"github.com/sushanthach12/ecom-go/internal/products"
 )
 
 type application struct {
 	config config.ConfigVars
 	logger *slog.Logger
-	db     *sql.DB
+	db     *database.DB
 }
 
 func (app *application) mount() http.Handler {
@@ -41,7 +42,8 @@ func (app *application) mount() http.Handler {
 	health.Register(router)
 
 	// Routes
-	products.Register(router, app.db, app.logger)
+	productAdapters := products.Register(router, app.db, app.logger)
+	orders.Register(router, app.db, app.logger, productAdapters.Adapter)
 
 	return router
 }

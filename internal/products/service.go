@@ -3,17 +3,21 @@ package products
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/sushanthach12/ecom-go/internal/constants"
 )
 
 type service struct {
 	repo productRepository
+
+	logger *slog.Logger
 }
 
-func NewService(repo productRepository) Service {
+func NewService(repo productRepository, logger *slog.Logger) Service {
 	return &service{
-		repo: repo,
+		repo:   repo,
+		logger: logger,
 	}
 }
 
@@ -68,4 +72,26 @@ func (s *service) GetById(ctx context.Context, id string) (constants.SimpleRespo
 		CreatedAt: product.CreatedAt,
 		UpdatedAt: product.UpdatedAt,
 	}, nil), nil
+}
+
+func (s *service) FindByIds(ctx context.Context, productIds []string) ([]Product, error) {
+	products, err := s.repo.FindByIds(ctx, productIds)
+	if err != nil {
+		s.logger.Error("service: list products", "error", err)
+		return nil, fmt.Errorf("service: list products: %w", err)
+	}
+
+	result := make([]Product, len(products))
+	for i, p := range products {
+		result[i] = Product{
+			ID:        p.ID,
+			Name:      p.Name,
+			Price:     p.Price,
+			Quantity:  p.Quantity,
+			CreatedAt: p.CreatedAt,
+			UpdatedAt: p.UpdatedAt,
+		}
+	}
+
+	return result, nil
 }

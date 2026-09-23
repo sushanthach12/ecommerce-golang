@@ -1,0 +1,100 @@
+package orders
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/sushanthach12/ecom-go/internal/constants"
+	"github.com/sushanthach12/ecom-go/internal/products"
+)
+
+type service struct {
+	repo       orderRepository
+	productSvc products.Adapter
+}
+
+func NewService(repo orderRepository, productSvc products.Adapter) Service {
+	return &service{
+		repo:       repo,
+		productSvc: productSvc,
+	}
+}
+
+func (s *service) PlaceOrder(ctx context.Context, payload placeOrderParams) (constants.SimpleResponse[placeOrderResponseDto], error) {
+	defaultResponse := constants.SimpleResponse[placeOrderResponseDto]{}
+
+	// 1. Look up all products referenced in the order in one batch call
+	productIds := make([]string, len(payload.Items))
+	for i, item := range payload.Items {
+		productIds[i] = item.ProductId
+	}
+
+	productsData, err := s.productSvc.FindByIds(ctx, productIds)
+	if err != nil {
+		return defaultResponse, fmt.Errorf("failed to fetch products: %w", err)
+	}
+
+	productById := make(map[string]products.Product, len(productsData))
+	for _, p := range productsData {
+		productById[p.ID] = p
+	}
+
+	// 2. Validate each item: product exists, has enough stock
+	orderItems := make([]placeOrderItemRepoParam, 0, len(payload.Items))
+	var total float64
+
+	for _, item := range payload.Items {
+		product, ok := productById[item.ProductId]
+		if !ok {
+			return defaultResponse, &constants.ValidationError{
+				Field:   "items.productId",
+				Message: fmt.Sprintf("product %s not found", item.ProductId),
+			}
+		}
+
+		if product.Quantity < item.Quantity {
+			return defaultResponse, &constants.ValidationError{
+				Field:   "items.quantity",
+				Message: fmt.Sprintf("insufficient stock for product %s", item.ProductId),
+			}
+		}
+
+		orderItems = append(orderItems, placeOrderItemRepoParam{
+			ProductId: item.ProductId,
+			Price:     product.Price,
+			Quantity:  item.Quantity,
+		})
+
+		total += product.Price * float64(item.Quantity)
+	}
+
+	var decrementOrderItems []products.StockDecrementParam
+	for _, item := range orderItems {
+		decrementOrderItems = append(decrementOrderItems, products.StockDecrementParam{
+			ProductId: item.ProductId,
+			Quantity:  item.Quantity,
+		})
+	}
+
+	// 3 & 4. Create the order and decrement stock atomically
+	var createdOrder order
+	err = s.repo.WithTx(ctx, func(txCtx context.Context) error {
+		var txErr error
+		createdOrder, txErr = s.repo.Create(txCtx, placeOrderRepoParams{
+			CustomerId: payload.CustomerId,
+			Total:      total,
+			Items:      orderItems,
+		})
+		if txErr != nil {
+			return txErr
+		}
+
+		return s.productSvc.DecrementStock(txCtx, decrementOrderItems)
+	})
+	if err != nil {
+		return defaultResponse, fmt.Errorf("failed to place order: %w", err)
+	}
+
+	// 5. Map to response DTO
+	return constants.NewResponse(placeOrderResponseDto{ID: createdOrder.ID}, nil), nil
+}
