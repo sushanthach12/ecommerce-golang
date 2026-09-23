@@ -29,8 +29,13 @@ func mapItems(items []placeOrderItemsPayloadDto) []placeOrderItemParam {
 	return result
 }
 
+type listOrderParams struct {
+	Page  int32
+	Limit int32
+}
+
 type Service interface {
-	List(ctx context.Context) (constants.Response[listOrderResponseDto], error)
+	List(ctx context.Context, params listOrderParams) (constants.Response[listOrderResponseDto], error)
 	PlaceOrder(ctx context.Context, payload placeOrderParams) (constants.SimpleResponse[placeOrderResponseDto], error)
 }
 
@@ -47,7 +52,14 @@ type placeOrderRepoParams struct {
 	Items      []placeOrderItemRepoParam
 }
 
+type listOrdersRepoParams struct {
+	Page     int32
+	PageSize int32
+}
+
 type orderRepository interface {
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
 	Create(ctx context.Context, data placeOrderRepoParams) (order, error)
+	Count(ctx context.Context) (int32, error)
+	GetOrders(ctx context.Context, params listOrdersRepoParams) ([]order, error)
 }

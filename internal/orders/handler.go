@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/sushanthach12/ecom-go/internal/constants"
+	"github.com/sushanthach12/ecom-go/internal/helpers"
 	"github.com/sushanthach12/ecom-go/internal/httpx"
 	"github.com/sushanthach12/ecom-go/internal/json"
 )
@@ -22,7 +23,22 @@ func newHandler(logger *slog.Logger, service Service) *handler {
 }
 
 func (h *handler) GetOrders(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("All good"))
+	params := helpers.ParsePaginationParams(r)
+
+	h.logger.Info("Received request for orders listing")
+
+	response, err := h.service.List(r.Context(), listOrderParams{
+		Page:  params.Page,
+		Limit: params.Limit,
+	})
+	if err != nil {
+		h.logger.Error("list orders failed", "error", err)
+		httpx.Error(w, http.StatusInternalServerError, "Something went wrong!", httpx.CodeInternalError)
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, response)
+
 }
 
 func (h *handler) PlaceOrder(w http.ResponseWriter, r *http.Request) {

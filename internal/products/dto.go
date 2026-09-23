@@ -2,9 +2,9 @@ package products
 
 import "time"
 
-type listProductPayload struct {
-	Page  int
-	Limit int
+type listProductParams struct {
+	Page  int32
+	Limit int32
 }
 
 type listProductsResponseDto struct {

@@ -26,7 +26,7 @@ func (h *handler) List(w http.ResponseWriter, r *http.Request) {
 
 	h.logger.Info("Received request for product listing")
 
-	response, err := h.service.List(r.Context(), listProductPayload{
+	response, err := h.service.List(r.Context(), listProductParams{
 		Page:  params.Page,
 		Limit: params.Limit,
 	})

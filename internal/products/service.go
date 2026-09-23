@@ -28,7 +28,7 @@ func NewService(repo productRepository, logger *slog.Logger) Service {
 	}
 }
 
-func (s *service) List(ctx context.Context, params listProductPayload) (constants.Response[listProductsResponseDto], error) {
+func (s *service) List(ctx context.Context, params listProductParams) (constants.Response[listProductsResponseDto], error) {
 	page := params.Page
 	limit := params.Limit
 

@@ -6,8 +6,8 @@ import (
 )
 
 type paginationParams struct {
-	Page  int
-	Limit int
+	Page  int32
+	Limit int32
 }
 
 func ParsePaginationParams(r *http.Request) paginationParams {
@@ -24,8 +24,8 @@ func ParsePaginationParams(r *http.Request) paginationParams {
 	}
 
 	return paginationParams{
-		Page:  page,
-		Limit: limit,
+		Page:  int32(page),
+		Limit: int32(limit),
 	}
 }
 

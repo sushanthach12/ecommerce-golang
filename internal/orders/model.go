@@ -8,7 +8,7 @@ type orderItems struct {
 	ProductId   string
 	ProductName string
 	Quantity    int32
-	Price       float32
+	Price       float64
 }
 
 type order struct {

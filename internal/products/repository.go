@@ -18,8 +18,8 @@ func newRepository(db *database.DB) productRepository {
 	}
 }
 
-func (r *repository) Count(ctx context.Context) (int, error) {
-	var totalItems int
+func (r *repository) Count(ctx context.Context) (int32, error) {
+	var totalItems int32
 	err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM products`).Scan(&totalItems)
 	if err != nil {
 		return 0, fmt.Errorf("count products: %w", err)
@@ -27,7 +27,7 @@ func (r *repository) Count(ctx context.Context) (int, error) {
 	return totalItems, nil
 }
 
-func (r *repository) List(ctx context.Context, limit, skip int) ([]productEntity, error) {
+func (r *repository) List(ctx context.Context, limit, skip int32) ([]productEntity, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, name, price, quantity, created_at, updated_at
 		FROM products

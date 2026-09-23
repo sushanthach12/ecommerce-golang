@@ -2,10 +2,10 @@ package constants
 
 // Pagination holds paging metadata
 type Pagination struct {
-	Page       int `json:"page"`
-	PageSize   int `json:"pageSize"`
-	TotalItems int `json:"totalItems"`
-	TotalPages int `json:"totalPages"`
+	Page       int32 `json:"page"`
+	PageSize   int32 `json:"pageSize"`
+	TotalItems int32 `json:"totalItems"`
+	TotalPages int32 `json:"totalPages"`
 }
 
 // Data wraps results + pagination for any result type T

@@ -3,6 +3,7 @@ package orders
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/sushanthach12/ecom-go/internal/constants"
 	"github.com/sushanthach12/ecom-go/internal/httpx"
@@ -100,11 +101,71 @@ func (s *service) PlaceOrder(ctx context.Context, payload placeOrderParams) (con
 	return constants.NewResponse(placeOrderResponseDto{ID: createdOrder.ID}, nil), nil
 }
 
-func (s *service) List(ctx context.Context) (constants.Response[listOrderResponseDto], error) {
-	return constants.NewPaginatedResponse([]listOrderResponseDto{}, constants.Pagination{
-		Page:       1,
-		PageSize:   10,
-		TotalItems: 10,
-		TotalPages: 1,
+func (s *service) List(ctx context.Context, params listOrderParams) (constants.Response[listOrderResponseDto], error) {
+	var (
+		orders     []order
+		totalItems int32
+		ordersErr  error
+		countErr   error
+	)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		orders, ordersErr = s.repo.GetOrders(ctx, listOrdersRepoParams{
+			Page:     params.Page,
+			PageSize: params.Limit,
+		})
+	}()
+
+	go func() {
+		defer wg.Done()
+		totalItems, countErr = s.repo.Count(ctx)
+	}()
+
+	wg.Wait()
+
+	if ordersErr != nil {
+		return constants.Response[listOrderResponseDto]{}, fmt.Errorf("service: list orders: %w", ordersErr)
+	}
+	if countErr != nil {
+		return constants.Response[listOrderResponseDto]{}, fmt.Errorf("service: count orders: %w", countErr)
+	}
+
+	result := make([]listOrderResponseDto, len(orders))
+	for i, o := range orders {
+		result[i] = mapOrderToListResponse(o)
+	}
+
+	totalPages := (totalItems + params.Limit - 1) / params.Limit
+
+	return constants.NewPaginatedResponse(result, constants.Pagination{
+		Page:       params.Page,
+		PageSize:   params.Limit,
+		TotalItems: totalItems,
+		TotalPages: totalPages,
 	}), nil
+}
+
+func mapOrderToListResponse(o order) listOrderResponseDto {
+	items := make([]listOrderItemResponseDto, len(o.Items))
+	for i, item := range o.Items {
+		items[i] = listOrderItemResponseDto{
+			ProductId:   item.ProductId,
+			ProductName: item.ProductName,
+			Quantity:    item.Quantity,
+			Price:       item.Price,
+		}
+	}
+
+	return listOrderResponseDto{
+		ID:         o.ID,
+		CustomerId: o.CustomerId,
+		Total:      o.Total,
+		Status:     o.Status,
+		Items:      items,
+		OrderedAt:  o.CreatedAt,
+	}
 }

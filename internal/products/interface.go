@@ -18,7 +18,7 @@ type Product struct {
 }
 
 type Service interface {
-	List(ctx context.Context, params listProductPayload) (constants.Response[listProductsResponseDto], error)
+	List(ctx context.Context, params listProductParams) (constants.Response[listProductsResponseDto], error)
 	GetById(ctx context.Context, id string) (constants.SimpleResponse[Product], error)
 	FindByIds(ctx context.Context, productIds []string) ([]Product, error)
 }
@@ -29,8 +29,8 @@ type stockDecrementRepoParam struct {
 }
 
 type productRepository interface {
-	Count(ctx context.Context) (int, error)
-	List(ctx context.Context, limit, skip int) ([]productEntity, error)
+	Count(ctx context.Context) (int32, error)
+	List(ctx context.Context, limit, skip int32) ([]productEntity, error)
 	GetById(ctx context.Context, id string) (productEntity, error)
 	FindByIds(ctx context.Context, ids []string) ([]productEntity, error)
 	DecrementStock(ctx context.Context, items []stockDecrementRepoParam) error
