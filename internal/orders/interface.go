@@ -30,6 +30,7 @@ func mapItems(items []placeOrderItemsPayloadDto) []placeOrderItemParam {
 }
 
 type Service interface {
+	List(ctx context.Context) (constants.Response[listOrderResponseDto], error)
 	PlaceOrder(ctx context.Context, payload placeOrderParams) (constants.SimpleResponse[placeOrderResponseDto], error)
 }
 

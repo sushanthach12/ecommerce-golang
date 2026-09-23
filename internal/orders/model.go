@@ -6,8 +6,11 @@ type orderItems struct {
 	ID        string
 	OrderId   string
 	ProductId string
-	Quantity  int32
-	Price     float32
+
+	// product name
+
+	Quantity int32
+	Price    float32
 }
 
 type order struct {

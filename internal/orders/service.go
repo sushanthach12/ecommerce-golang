@@ -98,3 +98,12 @@ func (s *service) PlaceOrder(ctx context.Context, payload placeOrderParams) (con
 	// 5. Map to response DTO
 	return constants.NewResponse(placeOrderResponseDto{ID: createdOrder.ID}, nil), nil
 }
+
+func (s *service) List(ctx context.Context) (constants.Response[listOrderResponseDto], error) {
+	return constants.NewPaginatedResponse([]listOrderResponseDto{}, constants.Pagination{
+		Page:       1,
+		PageSize:   10,
+		TotalItems: 10,
+		TotalPages: 1,
+	}), nil
+}
