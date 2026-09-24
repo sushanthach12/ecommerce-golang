@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"strings"
+	"uuid"
 )
 
 func CheckIfStringEmpty(s string) bool {
@@ -9,6 +10,14 @@ func CheckIfStringEmpty(s string) bool {
 		return true
 	}
 	return false
+}
+
+func CheckIfUuid(s string) bool {
+	if _, err := uuid.Parse(s); err != nil {
+		return false
+	}
+
+	return true
 }
 
 func CheckStringLen(s string, minLen int64, maxLen int64) bool {

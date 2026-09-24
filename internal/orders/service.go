@@ -7,18 +7,21 @@ import (
 
 	"github.com/sushanthach12/ecom-go/internal/constants"
 	"github.com/sushanthach12/ecom-go/internal/httpx"
+	"github.com/sushanthach12/ecom-go/internal/inventory"
 	"github.com/sushanthach12/ecom-go/internal/products"
 )
 
 type service struct {
-	repo       orderRepository
-	productSvc products.Adapter
+	repo         orderRepository
+	productSvc   products.Adapter
+	inventorySvc inventory.Adapter
 }
 
-func NewService(repo orderRepository, productSvc products.Adapter) Service {
+func NewService(repo orderRepository, productSvc products.Adapter, inventorySvc inventory.Adapter) Service {
 	return &service{
-		repo:       repo,
-		productSvc: productSvc,
+		repo:         repo,
+		productSvc:   productSvc,
+		inventorySvc: inventorySvc,
 	}
 }
 
@@ -70,16 +73,16 @@ func (s *service) PlaceOrder(ctx context.Context, payload placeOrderParams) (con
 		total += product.Price * float64(item.Quantity)
 	}
 
-	var decrementOrderItems []products.StockDecrementParam
+	var decrementOrderItems []inventory.DecrementStockParam
 	for _, item := range orderItems {
-		decrementOrderItems = append(decrementOrderItems, products.StockDecrementParam{
+		decrementOrderItems = append(decrementOrderItems, inventory.DecrementStockParam{
 			ProductId: item.ProductId,
 			Quantity:  item.Quantity,
 		})
 	}
 
 	// 3 & 4. Create the order and decrement stock atomically
-	var createdOrder order
+	var createdOrder orderEntity
 	err = s.repo.WithTx(ctx, func(txCtx context.Context) error {
 		var txErr error
 		createdOrder, txErr = s.repo.Create(txCtx, placeOrderRepoParams{
@@ -91,7 +94,7 @@ func (s *service) PlaceOrder(ctx context.Context, payload placeOrderParams) (con
 			return txErr
 		}
 
-		return s.productSvc.DecrementStock(txCtx, decrementOrderItems)
+		return s.inventorySvc.DecrementStockBulk(txCtx, decrementOrderItems)
 	})
 	if err != nil {
 		return defaultResponse, fmt.Errorf("failed to place order: %w", err)
@@ -103,7 +106,7 @@ func (s *service) PlaceOrder(ctx context.Context, payload placeOrderParams) (con
 
 func (s *service) List(ctx context.Context, params listOrderParams) (constants.Response[listOrderResponseDto], error) {
 	var (
-		orders     []order
+		orders     []orderEntity
 		totalItems int32
 		ordersErr  error
 		countErr   error
@@ -149,7 +152,7 @@ func (s *service) List(ctx context.Context, params listOrderParams) (constants.R
 	}), nil
 }
 
-func mapOrderToListResponse(o order) listOrderResponseDto {
+func mapOrderToListResponse(o orderEntity) listOrderResponseDto {
 	items := make([]listOrderItemResponseDto, len(o.Items))
 	for i, item := range o.Items {
 		items[i] = listOrderItemResponseDto{

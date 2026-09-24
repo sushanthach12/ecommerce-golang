@@ -2,7 +2,7 @@ package orders
 
 import "time"
 
-type orderItems struct {
+type orderItemsEntity struct {
 	ID          string
 	OrderId     string
 	ProductId   string
@@ -11,12 +11,12 @@ type orderItems struct {
 	Price       float64
 }
 
-type order struct {
+type orderEntity struct {
 	ID         string
 	CustomerId string
 	Total      float64
 	Status     string
-	Items      []orderItems
+	Items      []orderItemsEntity
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

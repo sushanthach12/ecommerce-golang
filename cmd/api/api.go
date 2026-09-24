@@ -14,6 +14,7 @@ import (
 	"github.com/sushanthach12/ecom-go/internal/config"
 	"github.com/sushanthach12/ecom-go/internal/database"
 	"github.com/sushanthach12/ecom-go/internal/health"
+	"github.com/sushanthach12/ecom-go/internal/inventory"
 	"github.com/sushanthach12/ecom-go/internal/orders"
 	"github.com/sushanthach12/ecom-go/internal/products"
 )
@@ -43,7 +44,8 @@ func (app *application) mount() http.Handler {
 
 	// Routes
 	productAdapters := products.Register(router, app.db, app.logger)
-	orders.Register(router, app.db, app.logger, productAdapters.Adapter)
+	inventoryAdapters := inventory.Register(router, app.db, app.logger, productAdapters.Adapter)
+	orders.Register(router, app.db, app.logger, productAdapters.Adapter, inventoryAdapters.Adapter)
 
 	return router
 }

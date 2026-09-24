@@ -22,10 +22,10 @@ func (r *repository) WithTx(ctx context.Context, fn func(ctx context.Context) er
 	return r.db.TxManager.WithTx(ctx, fn)
 }
 
-func (r *repository) Create(ctx context.Context, data placeOrderRepoParams) (order, error) {
+func (r *repository) Create(ctx context.Context, data placeOrderRepoParams) (orderEntity, error) {
 	exec := database.GetExecutor(ctx, r.db)
 
-	var o order
+	var o orderEntity
 	row := exec.QueryRowContext(ctx,
 		`INSERT INTO orders (customer_id, total)
 		 VALUES ($1, $2)
@@ -34,13 +34,13 @@ func (r *repository) Create(ctx context.Context, data placeOrderRepoParams) (ord
 	)
 
 	if err := row.Scan(&o.ID, &o.CustomerId, &o.Status, &o.Total, &o.CreatedAt, &o.UpdatedAt); err != nil {
-		return order{}, err
+		return orderEntity{}, err
 	}
 
-	o.Items = make([]orderItems, 0, len(data.Items))
+	o.Items = make([]orderItemsEntity, 0, len(data.Items))
 
 	for _, item := range data.Items {
-		var oi orderItems
+		var oi orderItemsEntity
 		itemRow := exec.QueryRowContext(ctx,
 			`INSERT INTO order_items (order_id, product_id, product_name, price, quantity)
 			 VALUES ($1, $2, $3, $4, $5)
@@ -49,7 +49,7 @@ func (r *repository) Create(ctx context.Context, data placeOrderRepoParams) (ord
 		)
 
 		if err := itemRow.Scan(&oi.ID, &oi.OrderId, &oi.ProductId, &oi.ProductName, &oi.Price, &oi.Quantity); err != nil {
-			return order{}, err
+			return orderEntity{}, err
 		}
 
 		o.Items = append(o.Items, oi)
@@ -69,7 +69,7 @@ func (r *repository) Count(ctx context.Context) (int32, error) {
 	return totalItems, nil
 }
 
-func (r *repository) GetOrders(ctx context.Context, params listOrdersRepoParams) ([]order, error) {
+func (r *repository) GetOrders(ctx context.Context, params listOrdersRepoParams) ([]orderEntity, error) {
 	exec := database.GetExecutor(ctx, r.db)
 
 	offset := (params.Page - 1) * params.PageSize
@@ -86,15 +86,15 @@ func (r *repository) GetOrders(ctx context.Context, params listOrdersRepoParams)
 	}
 	defer rows.Close()
 
-	ordersById := make(map[string]*order)
+	ordersById := make(map[string]*orderEntity)
 	var orderIds []string
 
 	for rows.Next() {
-		var o order
+		var o orderEntity
 		if err := rows.Scan(&o.ID, &o.CustomerId, &o.Total, &o.Status, &o.CreatedAt, &o.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan order row: %w", err)
 		}
-		o.Items = []orderItems{}
+		o.Items = []orderItemsEntity{}
 		ordersById[o.ID] = &o
 		orderIds = append(orderIds, o.ID)
 	}
@@ -104,7 +104,7 @@ func (r *repository) GetOrders(ctx context.Context, params listOrdersRepoParams)
 	}
 
 	if len(orderIds) == 0 {
-		return []order{}, nil
+		return []orderEntity{}, nil
 	}
 
 	// 2. Fetch items only for those order IDs — no LIMIT/OFFSET needed here
@@ -120,7 +120,7 @@ func (r *repository) GetOrders(ctx context.Context, params listOrdersRepoParams)
 	defer itemRows.Close()
 
 	for itemRows.Next() {
-		var oi orderItems
+		var oi orderItemsEntity
 		if err := itemRows.Scan(&oi.ID, &oi.OrderId, &oi.ProductId, &oi.ProductName, &oi.Quantity, &oi.Price); err != nil {
 			return nil, fmt.Errorf("scan order item row: %w", err)
 		}
@@ -134,7 +134,7 @@ func (r *repository) GetOrders(ctx context.Context, params listOrdersRepoParams)
 	}
 
 	// preserve original page order
-	result := make([]order, 0, len(orderIds))
+	result := make([]orderEntity, 0, len(orderIds))
 	for _, id := range orderIds {
 		result = append(result, *ordersById[id])
 	}

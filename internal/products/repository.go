@@ -109,29 +109,3 @@ func (r *repository) FindByIds(ctx context.Context, ids []string) ([]productEnti
 
 	return result, nil
 }
-
-func (r *repository) DecrementStock(ctx context.Context, items []stockDecrementRepoParam) error {
-	exec := database.GetExecutor(ctx, r.db)
-
-	for _, item := range items {
-		result, err := exec.ExecContext(ctx, `
-			UPDATE products
-			SET quantity = quantity - $1, updated_at = NOW()
-			WHERE id = $2 AND quantity >= $1
-		`, item.Quantity, item.ProductId)
-		if err != nil {
-			return fmt.Errorf("decrement stock for product %s: %w", item.ProductId, err)
-		}
-
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("check rows affected for product %s: %w", item.ProductId, err)
-		}
-
-		if rowsAffected == 0 {
-			return fmt.Errorf("insufficient stock or product %s not found", item.ProductId)
-		}
-	}
-
-	return nil
-}

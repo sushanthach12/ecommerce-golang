@@ -2,7 +2,6 @@ package products
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 )
 
@@ -55,30 +54,4 @@ func (a *adapter) FindByIds(ctx context.Context, productIds []string) ([]Product
 	}
 
 	return result, nil
-}
-
-func (a *adapter) DecrementStock(ctx context.Context, items []StockDecrementParam) error {
-	// validate items
-	var validatedItems []stockDecrementRepoParam
-
-	for i, item := range items {
-		if item.ProductId == "" {
-			return fmt.Errorf("items[%d].productId is required", i)
-		}
-
-		if item.Quantity <= 0 {
-			return fmt.Errorf("items[%d].quantity is required", i)
-		}
-
-		validatedItems = append(validatedItems, stockDecrementRepoParam{
-			ProductId: item.ProductId,
-			Quantity:  item.Quantity,
-		})
-	}
-
-	if err := a.repo.DecrementStock(ctx, validatedItems); err != nil {
-		return fmt.Errorf("service: decrement stock: %w", err)
-	}
-
-	return nil
 }

@@ -59,7 +59,7 @@ type listOrdersRepoParams struct {
 
 type orderRepository interface {
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
-	Create(ctx context.Context, data placeOrderRepoParams) (order, error)
+	Create(ctx context.Context, data placeOrderRepoParams) (orderEntity, error)
 	Count(ctx context.Context) (int32, error)
-	GetOrders(ctx context.Context, params listOrdersRepoParams) ([]order, error)
+	GetOrders(ctx context.Context, params listOrdersRepoParams) ([]orderEntity, error)
 }

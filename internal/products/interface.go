@@ -23,26 +23,14 @@ type Service interface {
 	FindByIds(ctx context.Context, productIds []string) ([]Product, error)
 }
 
-type stockDecrementRepoParam struct {
-	ProductId string
-	Quantity  int32
-}
-
 type productRepository interface {
 	Count(ctx context.Context) (int32, error)
 	List(ctx context.Context, limit, skip int32) ([]productEntity, error)
 	GetById(ctx context.Context, id string) (productEntity, error)
 	FindByIds(ctx context.Context, ids []string) ([]productEntity, error)
-	DecrementStock(ctx context.Context, items []stockDecrementRepoParam) error
-}
-
-type StockDecrementParam struct {
-	ProductId string
-	Quantity  int32
 }
 
 type Adapter interface {
 	GetByID(ctx context.Context, id string) (Product, error)
 	FindByIds(ctx context.Context, productIds []string) ([]Product, error)
-	DecrementStock(ctx context.Context, items []StockDecrementParam) error
 }
