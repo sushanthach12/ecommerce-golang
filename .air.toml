@@ -4,7 +4,7 @@
   cmd = "go build -o ./tmp/main ./cmd/api"
   delay = 1000
   entrypoint = ["./tmp/main"]
-  exclude_dir = ["assets", "tmp", "vendor", "testdata"]
+  exclude_dir = ["assets", "tmp", "vendor", "bin", ".git"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
@@ -33,3 +33,8 @@
     full_bin = ""
     post_cmd = []
     pre_cmd = []
+
+[log]
+  main_only = true
+  silent = false
+  time = false
