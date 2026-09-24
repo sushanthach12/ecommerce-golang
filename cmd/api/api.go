@@ -11,12 +11,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/sushanthach12/ecom-go/internal/auth"
 	"github.com/sushanthach12/ecom-go/internal/config"
 	"github.com/sushanthach12/ecom-go/internal/database"
 	"github.com/sushanthach12/ecom-go/internal/health"
 	"github.com/sushanthach12/ecom-go/internal/inventory"
 	"github.com/sushanthach12/ecom-go/internal/orders"
 	"github.com/sushanthach12/ecom-go/internal/products"
+	"github.com/sushanthach12/ecom-go/internal/users"
 )
 
 type application struct {
@@ -43,6 +45,9 @@ func (app *application) mount() http.Handler {
 	health.Register(router)
 
 	// Routes
+	userAdapters := users.Register(router, app.db, app.logger)
+	auth.Register(router, app.logger, userAdapters.Adapter)
+
 	productAdapters := products.Register(router, app.db, app.logger)
 	inventoryAdapters := inventory.Register(router, app.db, app.logger, productAdapters.Adapter)
 	orders.Register(router, app.db, app.logger, productAdapters.Adapter, inventoryAdapters.Adapter)

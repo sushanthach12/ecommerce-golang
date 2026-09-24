@@ -39,13 +39,13 @@ func DecodeAndValidate[T any, PT interface {
 	if validationErr := PT(&payload).Validate(); validationErr != nil {
 		vErr, ok := errors.AsType[*constants.ValidationError](validationErr)
 		if ok {
-			logger.Error("Validation failed:", "error", validationErr.Error())
-			httpx.Error(w, http.StatusBadRequest, "Invalid Payload", httpx.CodeValidationFailed)
+			logger.Error("Validation failed:", "error", vErr.Error())
+			httpx.ValidationError(w, http.StatusUnprocessableEntity, vErr.Error(), httpx.CodeValidationFailed, vErr.Field)
 			return payload, false
 		}
 
-		logger.Error("Validation failed:", "error", vErr.Error())
-		httpx.ValidationError(w, http.StatusUnprocessableEntity, vErr.Error(), httpx.CodeValidationFailed, vErr.Field)
+		logger.Error("Validation failed:", "error", validationErr.Error())
+		httpx.Error(w, http.StatusBadRequest, "Invalid Payload", httpx.CodeValidationFailed)
 		return payload, false
 	}
 
