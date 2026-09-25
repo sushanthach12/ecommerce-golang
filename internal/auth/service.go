@@ -78,7 +78,9 @@ func (s *service) Login(ctx context.Context, payload loginParams) (constants.Sim
 	decryptedErr := bcrypt.CompareHashAndPassword([]byte(exists.PasswordHash), []byte(payload.Password))
 	if decryptedErr != nil {
 		s.logger.Error("failed to decrypt", "error", decryptedErr)
-		return defaultResponse, fmt.Errorf("invalid credentials")
+		return defaultResponse, &httpx.UnauthorizedError{
+			Message: "invalid credentials",
+		}
 	}
 
 	access, _ := GenerateAccessToken(exists.ID, exists.Email)

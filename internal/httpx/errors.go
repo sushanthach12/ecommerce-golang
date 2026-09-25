@@ -49,6 +49,7 @@ var (
 	CodeForbidden        = ErrorCode{"forbidden"}
 	CodeConflict         = ErrorCode{"conflict"}
 	CodeRateLimited      = ErrorCode{"rate_limited"}
+	CodeUnauthorized     = ErrorCode{"unauthorized"}
 )
 
 type errorPayload struct {
@@ -94,6 +95,14 @@ func (e *NotFoundError) Error() string {
 	return e.Message
 }
 
+type UnauthorizedError struct {
+	Message string
+}
+
+func (e *UnauthorizedError) Error() string {
+	return e.Message
+}
+
 type ConflictError struct {
 	Field   string
 	Message string
@@ -108,16 +117,23 @@ func (e *ConflictError) Error() string {
 // known type.
 func HandleError(w http.ResponseWriter, err error) {
 	var notFoundErr *NotFoundError
+	var unauthorizedErr *UnauthorizedError
 	var conflictErr *ConflictError
 	var validationErr *constants.ValidationError
 
 	switch {
 	case errors.As(err, &notFoundErr):
 		Error(w, http.StatusNotFound, notFoundErr.Message, CodeNotFound)
+
+	case errors.As(err, &unauthorizedErr):
+		Error(w, http.StatusUnauthorized, unauthorizedErr.Message, CodeUnauthorized)
+
 	case errors.As(err, &conflictErr):
 		ValidationError(w, http.StatusConflict, conflictErr.Message, CodeConflict, conflictErr.Field)
+
 	case errors.As(err, &validationErr):
 		ValidationError(w, http.StatusUnprocessableEntity, validationErr.Message, CodeValidationFailed, validationErr.Field)
+
 	default:
 		Error(w, http.StatusInternalServerError, "Something went wrong!", CodeInternalError)
 	}

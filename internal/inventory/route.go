@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/sushanthach12/ecom-go/internal/auth"
 	"github.com/sushanthach12/ecom-go/internal/database"
 	"github.com/sushanthach12/ecom-go/internal/products"
 )
@@ -18,7 +19,11 @@ func Register(router *chi.Mux, db *database.DB, logger *slog.Logger, productAdap
 	service := NewService(logger, repository, productAdapter)
 	handler := newHandler(service, logger)
 
-	router.Post("/inventory/update", handler.UpdateStock)
+	router.Route("/inventory", func(r chi.Router) {
+		r.Use(auth.RequireAuth)
+
+		r.Post("/update", handler.UpdateStock)
+	})
 
 	return &returnValue{
 		Adapter: adapter,

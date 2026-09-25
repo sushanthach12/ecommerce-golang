@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/sushanthach12/ecom-go/internal/auth"
 	"github.com/sushanthach12/ecom-go/internal/database"
 	"github.com/sushanthach12/ecom-go/internal/inventory"
 	"github.com/sushanthach12/ecom-go/internal/products"
@@ -14,6 +15,10 @@ func Register(router *chi.Mux, db *database.DB, logger *slog.Logger, productSvc 
 	service := NewService(repository, productSvc, inventorySvc)
 	handler := newHandler(logger, service)
 
-	router.Get("/orders", handler.GetOrders)
-	router.Post("/orders", handler.PlaceOrder)
+	router.Route("/orders", func(r chi.Router) {
+		r.Use(auth.RequireAuth)
+
+		r.Get("/", handler.GetOrders)
+		r.Post("/", handler.PlaceOrder)
+	})
 }
